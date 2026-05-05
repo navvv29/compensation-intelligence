@@ -30,23 +30,66 @@ interface CompareData {
   };
 }
 
+type RowValue = string | number;
+
+interface RowInfoProps {
+  label: string;
+  val1: RowValue;
+  val2: RowValue;
+  formatter?: (value: RowValue) => string;
+  higherIsBetter?: boolean;
+}
+
+function RowInfo({
+  label,
+  val1,
+  val2,
+  formatter = String,
+  higherIsBetter = false,
+}: RowInfoProps) {
+  let highlight1 = false;
+  let highlight2 = false;
+
+  if (higherIsBetter && typeof val1 === 'number' && typeof val2 === 'number') {
+    if (val1 > val2) highlight1 = true;
+    if (val2 > val1) highlight2 = true;
+  }
+
+  return (
+    <tr className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
+      <td className="px-6 py-4 font-medium text-zinc-500 w-1/3">{label}</td>
+      <td className={`px-6 py-4 w-1/3 text-lg ${highlight1 ? 'text-green-700 dark:text-green-400 font-bold bg-green-50/50 dark:bg-green-900/10' : ''}`}>
+        {highlight1 && <CheckCircle2 className="inline w-4 h-4 mr-2" />}
+        {formatter(val1)}
+      </td>
+      <td className={`px-6 py-4 w-1/3 text-lg ${highlight2 ? 'text-green-700 dark:text-green-400 font-bold bg-green-50/50 dark:bg-green-900/10' : ''}`}>
+        {highlight2 && <CheckCircle2 className="inline w-4 h-4 mr-2" />}
+        {formatter(val2)}
+      </td>
+    </tr>
+  );
+}
+
 function CompareContent() {
   const searchParams = useSearchParams();
   const id1 = searchParams.get('id1');
   const id2 = searchParams.get('id2');
+  const missingIds = !id1 || !id2;
 
   const [data, setData] = useState<CompareData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!missingIds);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!id1 || !id2) {
-      setError('Please select two salaries to compare.');
-      setLoading(false);
+    if (missingIds) {
       return;
     }
 
     const fetchCompare = async () => {
+      setLoading(true);
+      setError('');
+      setData(null);
+
       try {
         const res = await fetch(`/api/compare?id1=${id1}&id2=${id2}`);
         if (res.status === 404) {
@@ -56,7 +99,7 @@ function CompareContent() {
         if (!res.ok) throw new Error('Failed to fetch data');
         const json = await res.json();
         setData(json);
-      } catch (err) {
+      } catch {
         setError('Error loading comparison data.');
       } finally {
         setLoading(false);
@@ -64,10 +107,10 @@ function CompareContent() {
     };
 
     fetchCompare();
-  }, [id1, id2]);
+  }, [id1, id2, missingIds]);
 
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+  const formatCurrency = (val: RowValue) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(val));
   };
 
   if (loading) {
@@ -75,6 +118,19 @@ function CompareContent() {
       <div className="max-w-4xl mx-auto flex flex-col gap-8 animate-pulse">
         <div className="h-10 w-48 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
         <div className="h-96 bg-zinc-200 dark:bg-zinc-800 rounded-xl"></div>
+      </div>
+    );
+  }
+
+  if (missingIds) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <AlertCircle className="w-16 h-16 text-zinc-300 dark:text-zinc-700 mb-4" />
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Please select two salaries to compare.</h1>
+        <p className="text-zinc-500 mb-6">Return to the salaries page and select two rows to compare.</p>
+        <Link href="/salaries" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+          Go to Salaries
+        </Link>
       </div>
     );
   }
@@ -93,30 +149,6 @@ function CompareContent() {
   }
 
   const { salary1: s1, salary2: s2, diff } = data;
-
-  const RowInfo = ({ label, val1, val2, formatter = String, higherIsBetter = false }: { label: string, val1: any, val2: any, formatter?: (v: any) => string, higherIsBetter?: boolean }) => {
-    let highlight1 = false;
-    let highlight2 = false;
-
-    if (higherIsBetter && typeof val1 === 'number' && typeof val2 === 'number') {
-      if (val1 > val2) highlight1 = true;
-      if (val2 > val1) highlight2 = true;
-    }
-
-    return (
-      <tr className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
-        <td className="px-6 py-4 font-medium text-zinc-500 w-1/3">{label}</td>
-        <td className={`px-6 py-4 w-1/3 text-lg ${highlight1 ? 'text-green-700 dark:text-green-400 font-bold bg-green-50/50 dark:bg-green-900/10' : ''}`}>
-          {highlight1 && <CheckCircle2 className="inline w-4 h-4 mr-2" />}
-          {formatter(val1)}
-        </td>
-        <td className={`px-6 py-4 w-1/3 text-lg ${highlight2 ? 'text-green-700 dark:text-green-400 font-bold bg-green-50/50 dark:bg-green-900/10' : ''}`}>
-          {highlight2 && <CheckCircle2 className="inline w-4 h-4 mr-2" />}
-          {formatter(val2)}
-        </td>
-      </tr>
-    );
-  };
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">

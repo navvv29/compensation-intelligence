@@ -41,7 +41,7 @@ export default function CompanyPage({ params }: { params: Promise<{ slug: string
         if (!res.ok) throw new Error('Failed to fetch data');
         const json = await res.json();
         setData(json);
-      } catch (err) {
+      } catch {
         setError('Error loading company data');
       } finally {
         setLoading(false);
@@ -73,7 +73,7 @@ export default function CompanyPage({ params }: { params: Promise<{ slug: string
       <div className="flex flex-col items-center justify-center py-20">
         <Building2 className="w-16 h-16 text-zinc-300 dark:text-zinc-700 mb-4" />
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">{error || "Not found"}</h1>
-        <p className="text-zinc-500 mb-6">We don't have enough data for this company yet.</p>
+        <p className="text-zinc-500 mb-6">We don&apos;t have enough data for this company yet.</p>
         <Link href="/salaries" className="flex items-center gap-2 text-blue-600 hover:underline">
           <ArrowLeft className="w-4 h-4" /> Back to all salaries
         </Link>

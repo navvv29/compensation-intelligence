@@ -1,12 +1,32 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { normalizeCompany } from '@/lib/normalize';
+import { findDemoCompany } from '@/lib/sample-salaries';
+
+function buildCompanyResponse(salaries: { level: string; total_compensation: number }[]) {
+  const compensations = salaries.map(s => s.total_compensation).sort((a, b) => a - b);
+  const mid = Math.floor(compensations.length / 2);
+  const median_compensation = compensations.length % 2 !== 0
+    ? compensations[mid]
+    : (compensations[mid - 1] + compensations[mid]) / 2;
+
+  const level_distribution = salaries.reduce((acc: Record<string, number>, s) => {
+    acc[s.level] = (acc[s.level] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    salaries,
+    median_compensation,
+    level_distribution
+  };
+}
 
 export async function GET(req: Request, { params }: { params: Promise<{ company: string }> }) {
-  try {
-    const rawCompany = (await params).company;
-    const company = normalizeCompany(rawCompany);
+  const rawCompany = (await params).company;
+  const company = normalizeCompany(rawCompany);
 
+  try {
     if (!company) {
       return NextResponse.json({ error: 'Company name is required' }, { status: 400 });
     }
@@ -20,27 +40,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ company:
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
 
-    // Calculate median total_compensation
-    const compensations = salaries.map(s => s.total_compensation).sort((a, b) => a - b);
-    const mid = Math.floor(compensations.length / 2);
-    const median_compensation = compensations.length % 2 !== 0 
-      ? compensations[mid] 
-      : (compensations[mid - 1] + compensations[mid]) / 2;
-
-    // Calculate level distribution
-    const level_distribution = salaries.reduce((acc: Record<string, number>, s) => {
-      acc[s.level] = (acc[s.level] || 0) + 1;
-      return acc;
-    }, {});
-
-    return NextResponse.json({
-      salaries,
-      median_compensation,
-      level_distribution
-    });
+    return NextResponse.json(buildCompanyResponse(salaries));
 
   } catch (error) {
     console.error('Fetch company error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const salaries = findDemoCompany(company);
+
+    if (salaries.length === 0) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(buildCompanyResponse(salaries));
   }
 }

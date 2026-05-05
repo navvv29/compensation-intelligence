@@ -48,7 +48,7 @@ function SalariesContent() {
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         setSalaries(data);
-      } catch (err) {
+      } catch {
         setError('Error loading salaries');
       } finally {
         setLoading(false);

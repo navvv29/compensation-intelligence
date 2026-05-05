@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import prisma from '@/lib/db';
 import { normalizeCompany } from '@/lib/normalize';
+import { findDemoSalaries } from '@/lib/sample-salaries';
 
 export async function GET(req: Request) {
   try {
@@ -12,23 +14,28 @@ export async function GET(req: Request) {
     const location = searchParams.get('location');
     const sort = searchParams.get('sort');
 
-    const where: any = {};
+    const where: Prisma.SalaryWhereInput = {};
     if (company) where.company = normalizeCompany(company);
     if (role) where.role = { contains: role, mode: 'insensitive' };
     if (level) where.level = level.toUpperCase();
     if (location) where.location = { contains: location, mode: 'insensitive' };
 
-    let orderBy: any = { total_compensation: 'desc' };
+    let orderBy: Prisma.SalaryOrderByWithRelationInput = { total_compensation: 'desc' };
+    const sortableFields = new Set<keyof Prisma.SalaryOrderByWithRelationInput>([
+      'base_salary',
+      'bonus',
+      'stock',
+      'total_compensation',
+      'experience_years',
+      'createdAt',
+    ]);
     
-    // Sort format could be just a field name, or field_asc / field_desc
     if (sort) {
-      if (sort.endsWith('_asc')) {
-        orderBy = { [sort.replace('_asc', '')]: 'asc' };
-      } else if (sort.endsWith('_desc')) {
-        orderBy = { [sort.replace('_desc', '')]: 'desc' };
-      } else {
-        // default to desc for the provided field
-        orderBy = { [sort]: 'desc' };
+      const direction = sort.endsWith('_asc') ? 'asc' : 'desc';
+      const field = sort.replace(/_(asc|desc)$/, '') as keyof Prisma.SalaryOrderByWithRelationInput;
+
+      if (sortableFields.has(field)) {
+        orderBy = { [field]: direction };
       }
     }
 
@@ -41,6 +48,7 @@ export async function GET(req: Request) {
 
   } catch (error) {
     console.error('Fetch salaries error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    const { searchParams } = new URL(req.url);
+    return NextResponse.json(findDemoSalaries(searchParams));
   }
 }
