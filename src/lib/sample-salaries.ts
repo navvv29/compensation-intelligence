@@ -30,7 +30,6 @@ const salaries: SalaryInput[] = [
   { company: 'google', role: 'SDE', level: 'L3', location: 'San Francisco', experience_years: 1, base_salary: 140000, bonus: 20000, stock: 40000 },
   { company: 'google', role: 'SDE II', level: 'L4', location: 'San Francisco', experience_years: 4, base_salary: 175000, bonus: 25000, stock: 70000 },
   { company: 'google', role: 'Senior SDE', level: 'L5', location: 'San Francisco', experience_years: 7, base_salary: 215000, bonus: 35000, stock: 120000 },
-  { company: 'microsoft', role: 'SDE', level: 'L59', location: 'Hyderabad', experience_years: 1, base_salary: 1500000, bonus: 150000, stock: 300000 },
   { company: 'microsoft', role: 'SDE', level: 'L3', location: 'Hyderabad', experience_years: 1, base_salary: 1500000, bonus: 150000, stock: 300000 },
   { company: 'microsoft', role: 'SDE II', level: 'L4', location: 'Bengaluru', experience_years: 4, base_salary: 2500000, bonus: 250000, stock: 600000 },
   { company: 'microsoft', role: 'Senior SDE', level: 'L5', location: 'Bengaluru', experience_years: 8, base_salary: 4000000, bonus: 500000, stock: 1500000 },

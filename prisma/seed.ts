@@ -15,7 +15,6 @@ const salaries = [
   { company: 'google', role: 'Senior SDE', level: 'L5', location: 'San Francisco', experience_years: 7, base_salary: 215000, bonus: 35000, stock: 120000 },
   
   // Microsoft
-  { company: 'microsoft', role: 'SDE', level: 'L59', location: 'Hyderabad', experience_years: 1, base_salary: 1500000, bonus: 150000, stock: 300000 }, // We should use L3/L4/L5 standard
   { company: 'microsoft', role: 'SDE', level: 'L3', location: 'Hyderabad', experience_years: 1, base_salary: 1500000, bonus: 150000, stock: 300000 },
   { company: 'microsoft', role: 'SDE II', level: 'L4', location: 'Bengaluru', experience_years: 4, base_salary: 2500000, bonus: 250000, stock: 600000 },
   { company: 'microsoft', role: 'Senior SDE', level: 'L5', location: 'Bengaluru', experience_years: 8, base_salary: 4000000, bonus: 500000, stock: 1500000 },
@@ -52,27 +51,29 @@ const salaries = [
 
 async function main() {
   console.log('Start seeding...')
-  for (const s of salaries) {
+  const rows = salaries.map((s) => {
     const total_compensation = s.base_salary + (s.bonus || 0) + (s.stock || 0)
-    
-    // Using upsert or just create. To avoid duplicates during repeated seeds.
-    // However, Prisma upsert needs a unique index. Let's just create.
-    await prisma.salary.create({
-      data: {
-        company: s.company,
-        role: s.role,
-        level: s.level,
-        location: s.location,
-        experience_years: s.experience_years,
-        base_salary: s.base_salary,
-        bonus: s.bonus,
-        stock: s.stock,
-        total_compensation,
-        confidence_score: 1.0,
-      }
-    })
-  }
-  console.log('Seeding finished.')
+
+    return {
+      company: s.company,
+      role: s.role,
+      level: s.level,
+      location: s.location,
+      experience_years: s.experience_years,
+      base_salary: s.base_salary,
+      bonus: s.bonus,
+      stock: s.stock,
+      total_compensation,
+      confidence_score: 1.0,
+    }
+  })
+
+  await prisma.$transaction([
+    prisma.salary.deleteMany(),
+    prisma.salary.createMany({ data: rows }),
+  ])
+
+  console.log(`Seeding finished. Inserted ${rows.length} salaries.`)
 }
 
 main()
