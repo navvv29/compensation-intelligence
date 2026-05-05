@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, GitCompareArrows } from 'lucide-react';
 
 interface Salary {
   id: string;
@@ -56,8 +56,8 @@ function RowInfo({
   }
 
   return (
-    <tr className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30">
-      <td className="px-6 py-4 font-medium text-zinc-500 w-1/3">{label}</td>
+    <tr className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/30 transition-colors">
+      <td className="px-6 py-4 font-medium text-zinc-500 w-1/3 text-sm">{label}</td>
       <td className={`px-6 py-4 w-1/3 text-lg ${highlight1 ? 'text-green-700 dark:text-green-400 font-bold bg-green-50/50 dark:bg-green-900/10' : ''}`}>
         {highlight1 && <CheckCircle2 className="inline w-4 h-4 mr-2" />}
         {formatter(val1)}
@@ -110,7 +110,11 @@ function CompareContent() {
   }, [id1, id2, missingIds]);
 
   const formatCurrency = (val: RowValue) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(val));
+    const num = Number(val);
+    if (num >= 100000 && num < 10000000) {
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(num);
+    }
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
   };
 
   if (loading) {
@@ -125,10 +129,12 @@ function CompareContent() {
   if (missingIds) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertCircle className="w-16 h-16 text-zinc-300 dark:text-zinc-700 mb-4" />
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Please select two salaries to compare.</h1>
-        <p className="text-zinc-500 mb-6">Return to the salaries page and select two rows to compare.</p>
-        <Link href="/salaries" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+        <div className="w-20 h-20 bg-zinc-100 dark:bg-zinc-800 rounded-2xl flex items-center justify-center mb-6">
+          <GitCompareArrows className="w-10 h-10 text-zinc-400 dark:text-zinc-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">Select Two Salaries to Compare</h1>
+        <p className="text-zinc-500 mb-6 max-w-md">Go to the salaries page and use the checkboxes to select exactly two rows for a detailed side-by-side comparison.</p>
+        <Link href="/salaries" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
           Go to Salaries
         </Link>
       </div>
@@ -138,10 +144,10 @@ function CompareContent() {
   if (error || !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <AlertCircle className="w-16 h-16 text-zinc-300 dark:text-zinc-700 mb-4" />
+        <AlertCircle className="w-16 h-16 text-red-300 dark:text-red-700 mb-4" />
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-2">{error || "Comparison not available"}</h1>
         <p className="text-zinc-500 mb-6">Return to the salaries page and select two rows to compare.</p>
-        <Link href="/salaries" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+        <Link href="/salaries" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors shadow-sm">
           Go to Salaries
         </Link>
       </div>
@@ -156,7 +162,10 @@ function CompareContent() {
         <Link href="/salaries" className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
-        <h1 className="text-3xl font-extrabold">Offer Comparison</h1>
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight">Offer Comparison</h1>
+          <p className="text-sm text-zinc-500 mt-0.5">Side-by-side structured compensation analysis</p>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
@@ -166,23 +175,31 @@ function CompareContent() {
               <th className="px-6 py-4 text-sm font-semibold text-zinc-400 w-1/3">Criteria</th>
               <th className="px-6 py-4 w-1/3">
                 <div className="text-xl font-bold capitalize">{s1.company}</div>
-                <div className="text-sm font-normal text-zinc-500 mt-1">{s1.role}</div>
+                <div className="text-sm font-normal text-zinc-500 mt-1">{s1.role} · {s1.level}</div>
               </th>
               <th className="px-6 py-4 w-1/3">
                 <div className="text-xl font-bold capitalize">{s2.company}</div>
-                <div className="text-sm font-normal text-zinc-500 mt-1">{s2.role}</div>
+                <div className="text-sm font-normal text-zinc-500 mt-1">{s2.role} · {s2.level}</div>
               </th>
             </tr>
           </thead>
           <tbody>
             <tr className="border-b border-zinc-100 dark:border-zinc-800/50">
-              <td className="px-6 py-4 font-medium text-zinc-500">Level</td>
-              <td className="px-6 py-4 font-semibold">{s1.level}</td>
-              <td className="px-6 py-4 font-semibold">{s2.level}</td>
+              <td className="px-6 py-4 font-medium text-zinc-500 text-sm">Level</td>
+              <td className="px-6 py-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+                  {s1.level}
+                </span>
+              </td>
+              <td className="px-6 py-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
+                  {s2.level}
+                </span>
+              </td>
             </tr>
             <tr className="border-b border-zinc-100 dark:border-zinc-800/50 bg-blue-50/30 dark:bg-blue-900/10">
-              <td className="px-6 py-3 font-medium text-zinc-500">Level Difference</td>
-              <td colSpan={2} className="px-6 py-3 text-center font-medium text-blue-700 dark:text-blue-400">
+              <td className="px-6 py-3 font-medium text-zinc-500 text-sm">Level Difference</td>
+              <td colSpan={2} className="px-6 py-3 text-center font-semibold text-blue-700 dark:text-blue-400">
                 {diff.level_diff}
               </td>
             </tr>
@@ -205,7 +222,7 @@ function CompareContent() {
 
 export default function ComparePage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center animate-pulse">Loading comparison...</div>}>
+    <Suspense fallback={<div className="p-8 text-center animate-pulse text-zinc-500">Loading comparison...</div>}>
       <CompareContent />
     </Suspense>
   );
